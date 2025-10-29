@@ -49,13 +49,14 @@
   </style>
 </head>
 <body>
-  <form id="otpForm">
+  <form id="otpForm" onsubmit="return false;">
     <h2>Email OTP Verification</h2>
+
     <input type="email" id="email" placeholder="Enter your email" required />
-    <button type="button" onclick="sendOtp()">Send OTP</button>
+    <button id="sendBtn" type="button" onclick="sendOtp()">Send OTP</button>
 
     <input type="text" id="otp" placeholder="Enter OTP" maxlength="6" />
-    <button type="button" onclick="verifyOtp()">Verify OTP</button>
+    <button id="verifyBtn" type="button" onclick="verifyOtp()">Verify OTP</button>
 
     <div id="message"></div>
   </form>
@@ -66,16 +67,27 @@
     async function sendOtp() {
       const email = document.getElementById("email").value;
       const messageEl = document.getElementById("message");
+      const sendBtn = document.getElementById("sendBtn");
 
-      const response = await fetch(`${API_BASE}/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
+      sendBtn.disabled = true; // Disable button after click
 
-      const data = await response.json();
-      messageEl.style.color = response.ok ? "green" : "red";
-      messageEl.innerText = data.message;
+      try {
+        const response = await fetch(`${API_BASE}/send-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+        messageEl.style.color = response.ok ? "green" : "red";
+        messageEl.innerText = data.message;
+
+      } catch (err) {
+        messageEl.style.color = "red";
+        messageEl.innerText = "Error sending OTP.";
+      } finally {
+        setTimeout(() => sendBtn.disabled = false, 60000); // Enable after 1 minute
+      }
     }
 
     async function verifyOtp() {
@@ -83,15 +95,20 @@
       const otp = document.getElementById("otp").value;
       const messageEl = document.getElementById("message");
 
-      const response = await fetch(`${API_BASE}/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp })
-      });
+      try {
+        const response = await fetch(`${API_BASE}/verify-otp`, {
+          method: "POST",  // ✅ Must be POST
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp })
+        });
 
-      const data = await response.json();
-      messageEl.style.color = response.ok ? "green" : "red";
-      messageEl.innerText = data.message;
+        const data = await response.json();
+        messageEl.style.color = response.ok ? "green" : "red";
+        messageEl.innerText = data.message;
+      } catch (err) {
+        messageEl.style.color = "red";
+        messageEl.innerText = "Error verifying OTP.";
+      }
     }
   </script>
 </body>
